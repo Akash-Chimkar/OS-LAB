@@ -3226,4 +3226,94 @@ int main() {
 }
 
 
+22.	Write a program  for following 1)  zombie process 2)orphan processes 3)sum of even numbers of an array in parent and odd numbers of an array in child process
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/wait.h>
+
+// Function to calculate sum of even numbers in an array
+void sum_even(int arr[], int size) {
+    int sum = 0;
+    for (int i = 0; i < size; i++) {
+        if (arr[i] % 2 == 0) {
+            sum += arr[i];
+        }
+    }
+    printf("Sum of even numbers in parent process: %d\n", sum);
+}
+
+// Function to calculate sum of odd numbers in an array
+void sum_odd(int arr[], int size) {
+    int sum = 0;
+    for (int i = 0; i < size; i++) {
+        if (arr[i] % 2 != 0) {
+            sum += arr[i];
+        }
+    }
+    printf("Sum of odd numbers in child process: %d\n", sum);
+}
+
+int main() {
+    int arr[] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
+    int size = sizeof(arr) / sizeof(arr[0]);
+
+    // 1. Zombie Process - Child terminates without the parent calling wait
+    pid_t pid = fork();
+
+    if (pid < 0) {
+        perror("fork failed");
+        exit(1);
+    }
+
+    if (pid == 0) {
+        // Child process
+        printf("Child process (Zombie): I'm a zombie process. I will terminate, but parent won't call wait.\n");
+        exit(0);  // Child process terminates here
+    } else {
+        // Parent process
+        printf("Parent process: I won't call wait() now. Child will become a zombie.\n");
+        sleep(10);  // Parent sleeps for a while to allow the child to become a zombie
+    }
+
+    // 2. Orphan Process - Parent terminates before child
+    pid_t pid2 = fork();
+
+    if (pid2 < 0) {
+        perror("fork failed");
+        exit(1);
+    }
+
+    if (pid2 == 0) {
+        // Child process
+        printf("Child process (Orphan): I'm an orphan process. My parent has terminated.\n");
+        sleep(10);  // Simulate a long-running orphan process
+    } else {
+        // Parent process
+        printf("Parent process (Orphan): I will terminate, and my child will become an orphan.\n");
+        exit(0);  // Parent process terminates, causing the child to become an orphan
+    }
+
+    // 3. Sum of even and odd numbers
+    pid_t pid3 = fork();
+
+    if (pid3 < 0) {
+        perror("fork failed");
+        exit(1);
+    }
+
+    if (pid3 == 0) {
+        // Child process calculates sum of odd numbers
+        sum_odd(arr, size);
+        exit(0);  // Child exits after computing the sum of odd numbers
+    } else {
+        // Parent process calculates sum of even numbers
+        sum_even(arr, size);
+        wait(NULL);  // Parent waits for the child to finish before exiting
+    }
+
+    return 0;
+}
+
 
